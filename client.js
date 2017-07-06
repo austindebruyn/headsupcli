@@ -1,11 +1,10 @@
-
 const program = require('commander')
-require('colors')
 const prompt = require('prompt')
+require('colors')
 
 program
   .version('0.1.0')
-  .option('-n, --name [name]', 'Players name')
+  .option('-n, --name [name]', `Player's name`)
   .parse(process.argv)
 
 let gameStarted = false
@@ -24,7 +23,7 @@ console.log('hello ' + program.name.red)
 
 const net = require('net')
 
-var client = new net.Socket();
+var client = new net.Socket()
 client.connect(23456, '127.0.0.1', function () {
 	console.log('WE IN');
   client.write(`setname ${program.name}`)

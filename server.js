@@ -1,4 +1,5 @@
 const net = require('net')
+const lex = require('./src/lex')
 require('colors')
 
 const STATE = {
@@ -55,8 +56,7 @@ const server = net.createServer(function (socket) {
   }
 
   socket.on('data', function (data) {
-    let message = data.toString().trim()
-    message = message.split(' ')
+    message = lex(data.toString())
 
     switch (message[0]) {
       case 'setname':
