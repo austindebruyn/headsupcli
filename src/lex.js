@@ -39,7 +39,7 @@ class Lexer {
           dissected = dissected.slice(match[0].length)
 
           const tokens = rule.callback(match[1])
-          if (tokens) {
+          if (tokens != null) {
             result = result.concat(tokens)
           }
           break

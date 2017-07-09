@@ -1,14 +1,16 @@
 {
   "dependencies": {
+    "carrier": "^0.3.0",
     "chai": "^4.0.2",
     "colors": "^1.1.2",
     "commander": "^2.10.0",
+    "lodash": "^4.17.4",
     "mocha": "^3.4.2",
     "prompt": "^1.0.0"
   },
   "scripts": {
     "test": "mocha test",
-    "lint": "eslint src test"
+    "lint": "eslint src test client.js server.js"
   },
   "devDependencies": {
     "eslint": "^3.19.0",

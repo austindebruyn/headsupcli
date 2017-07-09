@@ -1,80 +1,41 @@
 const net = require('net')
-const lex = require('./src/lex')
+const carrier = require('carrier')
+const Game = require('./src/game')
+const Lobby = require('./src/server/lobby')
+const interpret = require('./src/server/interpret')
 require('colors')
 
-const STATE = {
-  dealer: null,
-  activePlayer: null,
-  board: {
-    flop: [ 1, 2, 3 ]
-  },
-  pot: 0,
-  bb: 1,
-  players: []
-}
-
-function startGame() {
-  STATE.dealer = players[0].playerName
-  STATE.activePlayer = players[0].playerName
-  STATE.players.push({
-    name: players[0].playerName,
-    balance: STATE.bb * 100,
-    hand: [6, 7]
-  })
-  STATE.players.push({
-    name: players[1].playerName,
-    balance: STATE.bb * 100,
-    hand: [8, 9]
-  })
-}
-
-const players = []
-
-function broadcast(message) {
-  console.log(`Broadcasting... (${message})`.purple)
-  players.forEach(function (socket) {
-    socket.write(message)
-  })
-}
-function broadcastState() {
-  broadcast(`setstate '${JSON.stringify(STATE)}'\r\n`)
-}
+const game = new Game()
+const lobby = new Lobby()
 
 const server = net.createServer(function (socket) {
-  if (players.length === 2) {
-    socket.write('threes a crowd buddy. get a move on')
-    return socket.close()
+  if (lobby.size() === 2) {
+    lobby.reject(socket)
+    return
   }
 
-  players.push(socket)
+  const player = {}
+  player.id = lobby.size()
+  player.name = `Player ${lobby.size() + 1}`
 
-  if (players.length === 2) {
-    broadcast('begin\r\n')
-    console.log('Game is beginning...')
-    startGame()
-    broadcastState()
-  }
+  socket.player = player // eslint-disable-line no-param-reassign
+  lobby.join(socket)
+  lobby.whisper(player.id, 'id', player.id)
 
-  socket.on('data', function (data) {
-    message = lex(data.toString())
+  console.log(`${player.name} has joined from ${socket.address().address}`)
 
-    switch (message[0]) {
-      case 'setname':
-        socket.playerName = message[1]
-        console.log(`[${socket.playerName}] ${data.toString()}`.yellow)
-        break
-      case 'act':
-        const action = message[1].trim()
-
-        STATE.activePlayer = players[1].playerName
-        STATE.pot += STATE.bb
-        STATE.players[0].balance -= STATE.bb
-        broadcastState()
-        break
-      default:
-        console.log(`BAD MESSAGE [${socket.playerName}] ${data.toString()}`.red)
-    }
+  carrier.carry(socket, function (message) {
+    console.log(`[${player.name}] ${message}`)
+    interpret(message, player, game, lobby)
   })
+
+  if (lobby.size() === 2) {
+    game.start()
+    lobby.broadcast('begin')
+    lobby.broadcast('hydrate', game.state)
+  }
 })
 
-server.listen(23456, '127.0.0.1')
+server.listen(23456, '127.0.0.1', function () {
+  console.log('Server listening on 127.0.0.1:23456')
+})

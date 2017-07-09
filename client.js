@@ -1,69 +1,35 @@
+const net = require('net')
 const program = require('commander')
-const prompt = require('prompt')
+const carrier = require('carrier')
+const interpret = require('./src/client/interpret')
+const Game = require('./src/game')
+const Connection = require('./src/client/connection')
 require('colors')
 
 program
   .version('0.1.0')
-  .option('-n, --name [name]', `Player's name`)
+  .option('-n, --name [name]', 'Player\'s name')
   .parse(process.argv)
 
-let gameStarted = false
-let STATE = null
-
-function getAction() {
-  if (STATE.activePlayer === program.name) {
-    return {
-      message: '[C]all, [r]aise, [f]old?'
-    }
-  }
-  return null
+if (typeof program.name !== 'string') {
+  program.outputHelp()
+  process.exit(1)
 }
 
-console.log('hello ' + program.name.red)
+const socket = new net.Socket()
 
-const net = require('net')
+socket.connect(23456, '127.0.0.1', function () {
+  const connection = new Connection(socket)
+  const game = new Game()
 
-var client = new net.Socket()
-client.connect(23456, '127.0.0.1', function () {
-	console.log('WE IN');
-  client.write(`setname ${program.name}`)
-});
+  connection.send('setname', program.name)
 
-client.on('data', function(data) {
-	console.log(`[SERVER] ${data.toString()}`.cyan);
-  let message = data.toString().trim()
-  message = message.match(/^(\w*)(\s.*)?$/)
+  carrier.carry(socket, function (line) {
+    console.log(`[SERVER] ${line}`.cyan)
+    interpret(line, game, connection)
+  })
+})
 
-  switch (message[1].trim()) {
-    case 'begin':
-      gameStarted = true
-      console.log('game is started! :tada:')
-      break
-    case 'setstate':
-      console.log('I got a setstate!')
-      const jsonString = message[2].trim().match(/^'(.*)'$/)[1]
-      STATE = JSON.parse(jsonString)
-
-      const action = getAction()
-      if (action) {
-        console.log(action.message.red)
-        prompt.start()
-        prompt.get(['action'], function (err, result) {
-          if (err) throw err
-
-          client.write(`act ${result.action}`)
-        })
-      }
-      else {
-        console.log('Waiting for other player...')
-      }
-      break
-    default:
-      console.log(`bad message '${message[1]}' from server`)
-      break
-  }
-});
-
-client.on('close', function() {
-	console.log('closed');
-});
+socket.on('close', function () {
+  console.log('closed')
+})

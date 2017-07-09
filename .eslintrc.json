@@ -10,6 +10,9 @@
     "semi": ["error", "never"],
     "no-plusplus": "off",
     "no-use-before-define": "off",
-    "no-useless-escape": "off"
+    "no-useless-escape": "off",
+    "prefer-arrow-callback": "off",
+    "func-names": "off",
+    "no-param-reassign": "off"
   }
 }
