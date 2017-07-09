@@ -1,6 +1,12 @@
 const _ = require('lodash')
 
-module.exports = function buildMessage(...args) {
+/**
+ * Shortcut utility to fold down any number of arguments into a single string
+ * separated by spaces. Objects and arrays are serialized.
+ * @param  {any} args
+ * @return {String}
+ */
+function buildMessage(...args) {
   return _(args)
     .map(tokenify)
     .flattenDeep()
@@ -13,3 +19,5 @@ module.exports = function buildMessage(...args) {
     return `'${JSON.stringify(value)}'`
   }
 }
+
+module.exports = buildMessage

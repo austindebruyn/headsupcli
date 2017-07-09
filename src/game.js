@@ -23,6 +23,10 @@ class Game {
     return null
   }
 
+  validateAction(action) {
+    
+  }
+
   start() {
     this.state.dealer = 0
     this.state.activePlayer = 0

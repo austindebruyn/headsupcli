@@ -1,8 +1,9 @@
+const lex = require('./src/lex')
 const net = require('net')
 const carrier = require('carrier')
 const Game = require('./src/game')
 const Lobby = require('./src/server/lobby')
-const interpret = require('./src/server/interpret')
+const Interpreter = require('./src/interpreter')
 require('colors')
 
 const game = new Game()
@@ -14,19 +15,30 @@ const server = net.createServer(function (socket) {
     return
   }
 
-  const player = {}
-  player.id = lobby.size()
-  player.name = `Player ${lobby.size() + 1}`
-
-  socket.player = player // eslint-disable-line no-param-reassign
-  lobby.join(socket)
+  const player = lobby.join(socket)
   lobby.whisper(player.id, 'id', player.id)
 
   console.log(`${player.name} has joined from ${socket.address().address}`)
 
   carrier.carry(socket, function (message) {
+    const tokens = lex(message)
+    const interpreter = new Interpreter()
+
     console.log(`[${player.name}] ${message}`)
-    interpret(message, player, game, lobby)
+
+    interpreter.rule('act', function () {
+      game.state.activePlayer = 1
+      game.state.pot += game.state.bb
+      game.state.players[0].balance -= game.state.bb
+      lobby.broadcast('hydrate', game.state)
+    })
+    .rule('setname', function (name) {
+      player.name = name
+    })
+
+    if (!interpreter.go(tokens)) {
+      console.log(`bad message '${tokens[0]}' from client`)
+    }
   })
 
   if (lobby.size() === 2) {
