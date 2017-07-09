@@ -8,8 +8,8 @@ function lex(input) {
   return lexer.rule('trim whitespace', /^(\s+)/, () => null)
     .rule('numbers', /^(\d+)/, i => parseInt(i, 10))
     .rule('characters', /^(\w+)/, i => i)
-    .rule('double quoted string', /^"([\w\s\[\],:'{}]+)"/, i => jsonOrString(i))
-    .rule('single quoted string', /^'([\w\s\[\],:"{}]+)'/, i => jsonOrString(i))
+    .rule('double quoted string', /^"([\w\s\[\]SHCD,:'{}]+)"/, i => jsonOrString(i))
+    .rule('single quoted string', /^'([\w\s\[\]SHCD,:"{}]+)'/, i => jsonOrString(i))
     .run(input)
 }
 

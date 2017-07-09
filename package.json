@@ -2,11 +2,13 @@
   "dependencies": {
     "carrier": "^0.3.0",
     "chai": "^4.0.2",
+    "clear": "^0.0.1",
     "colors": "^1.1.2",
     "commander": "^2.10.0",
+    "inquirer": "^3.2.0",
     "lodash": "^4.17.4",
     "mocha": "^3.4.2",
-    "prompt": "^1.0.0"
+    "pad-right": "^0.2.2"
   },
   "scripts": {
     "test": "mocha test",

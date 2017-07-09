@@ -21,7 +21,7 @@ class Lobby {
     return _.last(this.players)
   }
 
-  static reject(socket) {
+  reject(socket) {
     socket.write('noroom\n')
     socket.end()
   }
