@@ -13,7 +13,10 @@ function buildMessage(...args) {
     .join(' ')
 
   function tokenify(value) {
-    if (typeof value === 'string') return value
+    if (typeof value === 'string') {
+      if (value.includes('\'')) return `"${value}"`
+      return `'${value}'`
+    }
     if (typeof value === 'number') return value.toString()
     if (Array.isArray(value)) return value.map(tokenify)
     return `'${JSON.stringify(value)}'`

@@ -37,8 +37,15 @@ const server = net.createServer(function (socket) {
     console.log(`[${player.name}] ${message}`)
 
     interpreter.rule('act', function (action, ...args) {
-      game.mutate(action, ...args)
-      lobby.broadcast('hydrate', game.state)
+      const err = game.mutate(action, player.id, ...args)
+
+      if (err) {
+        if (err.name !== 'GameMutationError') throw err
+        lobby.whisper(player.id, 'fatal', err.message)
+      }
+      else {
+        lobby.broadcast('hydrate', game.state)
+      }
     })
     .rule('setname', function (name) {
       player.name = name.slice(0, 8)

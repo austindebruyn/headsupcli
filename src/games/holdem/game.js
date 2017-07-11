@@ -1,6 +1,7 @@
 const _ = require('lodash')
 const getDecision = require('./getDecision')
 const mutate = require('./mutate')
+const deepcopy = require('deepcopy')
 
 class Game {
   constructor() {
@@ -51,8 +52,16 @@ class Game {
     return this.state.pot[id]
   }
 
-  mutate(action, ...args) {
-    return mutate(this, action, ...args)
+  mutate(action, playerId, ...args) {
+    const oldState = deepcopy(this.state)
+    try {
+      mutate(this, playerId, action, ...args)
+      return null
+    }
+    catch (e) {
+      this.hydrate(oldState)
+      return e
+    }
   }
 
   setPlayerName(id, name) {
@@ -60,7 +69,7 @@ class Game {
   }
 
   start() {
-    mutate(this, 'start')
+    mutate(this, 0, 'start')
   }
 
   hydrate(state = {}) {

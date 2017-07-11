@@ -30,6 +30,21 @@ socket.connect(23456, '127.0.0.1', function () {
 
   connection.send('setname', program.name)
 
+  function prompt(decision) {
+    inquirer.prompt([{
+      type: 'list',
+      name: 'decision',
+      message: decision.message,
+      choices: decision.options,
+    }]).then(function ({ decision }) {
+      connection.send('act', decision)
+    })
+    .catch(function (err) {
+      console.error(err)
+      process.exit(1)
+    })
+  }
+
   carrier.carry(socket, function (line) {
     const tokens = lex(line)
     const interpreter = new Interpreter()
@@ -46,7 +61,16 @@ socket.connect(23456, '127.0.0.1', function () {
     .rule('id', function (id) {
       connection.id = id
     })
-    .rule('hydrate', function (state) {
+    .rule('fatal', function (message) {
+      reporter.state(game, connection.id)
+      console.log(`[SERVER] @you: ${message.red}`)
+
+      const decision = game.getDecision(connection.id)
+      if (decision) {
+        prompt(decision)
+      }
+    })
+    .rule('hydrate', function (state) { console.log('got  HYDRA')
       game.hydrate(state)
 
       reporter.state(game, connection.id)
@@ -54,18 +78,7 @@ socket.connect(23456, '127.0.0.1', function () {
       const decision = game.getDecision(connection.id)
 
       if (decision) {
-        inquirer.prompt([{
-          type: 'list',
-          name: 'decision',
-          message: decision.message,
-          choices: decision.options,
-        }]).then(function ({ decision }) {
-          connection.send('act', decision)
-        })
-        .catch(function (err) {
-          console.error(err)
-          process.exit(1)
-        })
+        prompt(decision)
       } else {
         console.log('Waiting for other player...')
       }

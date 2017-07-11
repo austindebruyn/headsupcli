@@ -9,7 +9,18 @@ module.exports = getDecision
  * @return {Object|null}
  */
 function getDecision(game, playerId) {
-  if (game.state.activePlayer === playerId) {
+  if (game.state.results) {
+    if (!game.state.players[playerId].acknowledged) {
+      return {
+        message: 'Ready for next hand?',
+        options: [
+          { name: 'Yes', value: 'ack' }
+        ]
+      }
+    }
+    return null
+  }
+  else if (game.state.activePlayer === playerId) {
     return {
       message: 'What to do?',
       options: [

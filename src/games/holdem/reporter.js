@@ -4,8 +4,8 @@ const clear = require('clear')
 require('colors')
 
 function colorCard(card) {
-  const suit = { D: '♦', S: '♠', H: '♥', C: '♣' }[card[1]]
-  const color = 'DH'.includes(card[1]) ? 'red' : 'gray'
+  const suit = { d: '♦', s: '♠', h: '♥', c: '♣' }[card[1]]
+  const color = 'dh'.includes(card[1]) ? 'red' : 'gray'
 
   return `${card[0]}${suit}`[color]
 }
@@ -25,7 +25,14 @@ class Reporter {
 
     // build their hand
     if (them.hand) {
-      console.log(`        🂠? 🂠?       `)
+      if (game.state.results) {
+        const card1 = them.hand[0]
+        const card2 = them.hand[1]
+        console.log(`        ${colorCard(card1)} ${colorCard(card2)}       `)
+      }
+      else {
+        console.log(`        🂠? 🂠?       `)
+      }
     } else {
       console.log('                      ')
     }
@@ -58,6 +65,27 @@ class Reporter {
     console.log('----------------------------'.yellow)
     console.log(` You have put $${game.getTotalForPlayer(you.id)} into this pot.`)
     console.log('----------------------------'.yellow)
+
+    // results
+    if (game.state.results) {
+      if (game.state.results.tie) {
+        console.log(you.name + ': ' + _.find(game.state.results.tie, { id: you.id }))
+        console.log(them.name + ': ' + _.find(game.state.results.tie, { id: them.id }))
+      }
+      else {
+        if (game.state.results.winner.id === you.id) {
+          console.log(`YOU WON THE HAND! TAKE THE POT $${game.getTotal().toString().green}`)
+          console.log(`${you.name}: ${game.state.results.winner.description}`)
+          console.log(`${them.name}: ${game.state.results.loser.description}`)
+        }
+        else {
+          console.log(`You lost. ${them.name} took $${game.getTotal().toString().red}`)
+          console.log(`${them.name}: ${game.state.results.winner.description}`)
+          console.log(`${you.name}: ${game.state.results.loser.description}`)
+        }
+      }
+    }
+
     console.log('\n')
   }
 }

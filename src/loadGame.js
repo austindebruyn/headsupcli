@@ -10,10 +10,10 @@ function loadGame(game) {
   try {
     classes.Game = require(`./games/${game}/game`)
     classes.Reporter = require(`./games/${game}/reporter`)
-    classes.validate = require(`./games/${game}/validate`)
+    classes.mutate = require(`./games/${game}/mutate`)
   }
   catch (e) {
-    if (e.code === 'MODULE_NOT_FOUND' && e.message.includes(game)) {
+    if (e.code === 'MODULE_NOT_FOUND') {
       console.error(`Game '${game}' doesn't exist.`)
       process.exit(1)
     }
