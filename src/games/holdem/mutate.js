@@ -62,8 +62,11 @@ function newHand(game) {
   game.state.dealer = opposite(game.state.dealer)
   game.state.activePlayer = game.state.dealer
 
-  game.state.pot[game.state.dealer] = game.state.sb
-  game.state.pot[opposite(game.state.dealer)] = game.state.bb
+  game.clearPot()
+  game.state.pot.hot[game.state.dealer] = game.state.sb
+  game.state.pot.hot[opposite(game.state.dealer)] = game.state.bb
+  game.state.pot.cold[game.state.dealer] = 0
+  game.state.pot.cold[opposite(game.state.dealer)] = 0
 
   game.state.players[game.state.dealer].balance -= game.state.sb
   game.state.players[opposite(game.state.dealer)].balance -= game.state.bb
@@ -73,6 +76,11 @@ function newHand(game) {
 }
 
 function nextStage(game) {
+  game.state.pot.cold[game.state.dealer] += game.state.pot.hot[game.state.dealer]
+  game.state.pot.hot[game.state.dealer] = 0
+  game.state.pot.cold[opposite(game.state.dealer)] += game.state.pot.hot[opposite(game.state.dealer)]
+  game.state.pot.hot[opposite(game.state.dealer)] = 0
+
   if (!game.state.board.flop) {
     game.state.board.flop = [randomCard(), randomCard(), randomCard()]
     game.state.activePlayer = opposite(game.state.dealer)
@@ -90,9 +98,10 @@ function nextStage(game) {
  * @param  {Game} game
  * @param  {any}  playerId
  * @param  {string} action
+ * @param  {any} argument
  * @return {void}
  */
-function mutate(game, playerId, action) {
+function mutate(game, playerId, action, argument) {
   const player = game.getPlayer(playerId)
   const opponent = game.getOpponent(playerId)
 
@@ -104,12 +113,11 @@ function mutate(game, playerId, action) {
   }
   if (action === 'fold') {
     opponent.balance += game.getTotal()
-    game.state.pot = {}
 
     return newHand(game)
   }
   if (action === 'check') {
-    const difference = game.state.pot[opponent.id] - game.state.pot[player.id]
+    const difference = game.state.pot.hot[opponent.id] - game.state.pot.hot[player.id]
     if (difference > 0 && player.balance > 0) {
       throw new GameMutationError(`You can't check here. Opponent has bet ${difference} to call.`)
     }
@@ -120,6 +128,9 @@ function mutate(game, playerId, action) {
     game.state.activePlayer = opposite(game.state.activePlayer)
   }
   if (action === 'ack') {
+    if (!game.state.results) {
+      throw new GameMutationError('Bad time to ack.')
+    }
     game.state.players[player.id].acknowledged = true
 
     if (game.state.players[opponent.id].acknowledged) {
@@ -134,7 +145,7 @@ function mutate(game, playerId, action) {
     }
   }
   if (action === 'call') {
-    const difference = game.state.pot[opponent.id] - game.state.pot[player.id]
+    const difference = game.state.pot.hot[opponent.id] - game.state.pot.hot[player.id]
 
     if (difference <= 0) {
       throw new GameMutationError(`There's nothing to call.`)
@@ -142,13 +153,30 @@ function mutate(game, playerId, action) {
     if (player.balance <= difference) {
       throw new GameMutationError(`You don't have enough to call.`)
     }
-    game.state.pot[player.id] += difference
+    game.state.pot.hot[player.id] += difference
     player.balance -= difference
     game.state.activePlayer = opposite(game.state.activePlayer)
   }
   if (action === 'raise') {
-    game.state.pot[player.id] += 6
-    player.balance -= 6
+    const raiseAmount = parseInt(argument, 10)
+    if (isNaN(raiseAmount)) {
+      throw new GameMutationError(`The amount to raise must be a number.`)
+    }
+    if (raiseAmount < game.state.bb) {
+      throw new GameMutationError(`Raise must be at least one big blind ($${game.state.bb}).`)
+    }
+    if (raiseAmount < game.state.pot.hot[opponent.id] * 2) {
+      throw new GameMutationError(`Your opponent bet $${game.state.pot.hot[opponent.id]}. You must at least double this.`)
+    }
+
+    const difference = raiseAmount - game.state.pot.hot[player.id]
+
+    if (difference > player.balance) {
+      throw new GameMutationError(`You're about to go all-in!`)
+    }
+
+    game.state.pot.hot[player.id] += difference
+    player.balance -= difference
     game.state.activePlayer = opposite(game.state.activePlayer)
   }
 }

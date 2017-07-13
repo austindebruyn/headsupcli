@@ -33,5 +33,12 @@ describe('.lex', function () {
       expect(typeof tokens[1]).to.eql('object')
       expect(tokens).to.eql(['hello', { a: [1, 2, 3] }])
     })
+
+    it('complicated string', function () {
+      const tokens = lex('hello \'want to go all-in with $200 (that\'s a lot)?!\'')
+
+      expect(typeof tokens[1]).to.eql('string')
+      expect(tokens).to.eql(['hello', "want to go all-in with $200 (that's a lot)?!"])
+    })
   })
 })

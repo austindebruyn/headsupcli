@@ -30,26 +30,40 @@ socket.connect(23456, '127.0.0.1', function () {
 
   connection.send('setname', program.name)
 
-  function prompt(decision) {
-    inquirer.prompt([{
-      type: 'list',
-      name: 'decision',
-      message: decision.message,
-      choices: decision.options,
-    }]).then(function ({ decision }) {
-      connection.send('act', decision)
-    })
-    .catch(function (err) {
-      console.error(err)
-      process.exit(1)
-    })
-  }
-
   carrier.carry(socket, function (line) {
+    let nextDecision = null
     const tokens = lex(line)
     const interpreter = new Interpreter()
 
     console.log(`[SERVER] ${line}`.cyan)
+
+    function prompt(decision, currentPotAmount=0) {
+      let raiseMessage = 'How much to raise the bet to?'
+      if (currentPotAmount > 0) {
+        raiseMessage += ` (You have already bet $${currentPotAmount} on this hand)`
+      }
+      inquirer.prompt([{
+        type: 'list',
+        name: 'decision',
+        message: decision.message,
+        choices: decision.options,
+      }, {
+        type: 'input',
+        name: 'raise',
+        message: raiseMessage,
+        when: ({ decision }) => decision === 'raise'
+      }]).then(function ({ decision, raise }) {
+        nextDecision = null
+        if (decision === 'raise') {
+          return connection.send('act', decision, raise)
+        }
+        connection.send('act', decision)
+      })
+      .catch(function (err) {
+        console.error(err)
+        process.exit(1)
+      })
+    }
 
     interpreter.rule('noroom', function () {
       console.log('Server kicked us out. no room')
@@ -67,20 +81,23 @@ socket.connect(23456, '127.0.0.1', function () {
 
       const decision = game.getDecision(connection.id)
       if (decision) {
-        prompt(decision)
+        prompt(decision, game.state.pot.hot[connection.id])
       }
     })
-    .rule('hydrate', function (state) { console.log('got  HYDRA')
+    .rule('hydrate', function (state) {
       game.hydrate(state)
 
-      reporter.state(game, connection.id)
+      if (!nextDecision) {
+        reporter.state(game, connection.id)
 
-      const decision = game.getDecision(connection.id)
+        nextDecision = game.getDecision(connection.id)
 
-      if (decision) {
-        prompt(decision)
-      } else {
-        console.log('Waiting for other player...')
+        if (nextDecision) {
+          prompt(nextDecision)
+        } else {
+          nextDecision = null
+          console.log('Waiting for other player...')
+        }
       }
     })
 

@@ -40,6 +40,7 @@ const server = net.createServer(function (socket) {
       const err = game.mutate(action, player.id, ...args)
 
       if (err) {
+        console.log(err)
         if (err.name !== 'GameMutationError') throw err
         lobby.whisper(player.id, 'fatal', err.message)
       }

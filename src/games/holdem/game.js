@@ -10,7 +10,10 @@ class Game {
       dealer: 1,
       activePlayer: null,
       board: {},
-      pot: {},
+      pot: {
+        cold: {},
+        hot: {},
+      },
       sb: 1,
       bb: 2,
       players: [],
@@ -44,12 +47,16 @@ class Game {
     return getDecision(this, id)
   }
 
+  clearPot() {
+    this.state.pot = { hot: {}, cold: {}, }
+  }
+
   getTotal() {
-    return this.state.players.reduce((acc, p) => acc + (this.state.pot[p.id] || 0), 0)
+    return this.state.players.reduce((acc, p) => acc + (this.getTotalForPlayer(p.id) || 0), 0)
   }
 
   getTotalForPlayer(id) {
-    return this.state.pot[id]
+    return (this.state.pot.cold[id] || 0) + (this.state.pot.hot[id] || 0)
   }
 
   mutate(action, playerId, ...args) {
