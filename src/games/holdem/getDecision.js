@@ -16,9 +16,9 @@ function getDecision(game, playerId) {
         options: [
           { name: 'Yes', value: 'ack' }
         ]
-      }
+      };
     }
-    return null
+    return null;
   }
   else if (game.state.activePlayer === playerId) {
     return {

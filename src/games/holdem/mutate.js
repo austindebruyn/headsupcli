@@ -83,7 +83,7 @@ function nextStage(game) {
 
   if (!game.state.board.flop) {
     game.state.board.flop = [randomCard(), randomCard(), randomCard()]
-    game.state.activePlayer = opposite(game.state.dealer)
+    game.state.activePlayer = game.state.dealer
   } else if (!game.state.board.turn) {
     game.state.board.turn = randomCard()
   } else if (!game.state.board.river) {
@@ -172,11 +172,18 @@ function mutate(game, playerId, action, argument) {
     const difference = raiseAmount - game.state.pot.hot[player.id]
 
     if (difference > player.balance) {
-      throw new GameMutationError(`You're about to go all-in!`)
+      throw new GameMutationError(`You're about to go all-in.`)
     }
 
     game.state.pot.hot[player.id] += difference
     player.balance -= difference
     game.state.activePlayer = opposite(game.state.activePlayer)
+  }
+  if (action === 'allin') {
+    if (player.balance === 0) {
+      throw new GameMutationError(`You've already gone all-in.`)
+    }
+    game.state.pot.hot[player.id] += player.balance
+    player.balance = 0
   }
 }

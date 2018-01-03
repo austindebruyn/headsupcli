@@ -21,7 +21,8 @@ class Reporter {
     console.log('----------------------------'.yellow)
     console.log(`Hand №${game.state.hand + 1}`.yellow)
     console.log('----------------------------'.yellow)
-    console.log(`${rightPad(them.name, 8, '.').cyan} $${them.balance.toString().green}`)
+    const isThemButton = them.id === game.state.dealer ? '(BTN)' : '     ';
+    console.log(`${isThemButton}${rightPad(them.name, 8, '.').cyan} $${them.balance.toString().green}`)
 
     // build their hand
     if (them.hand) {
@@ -61,7 +62,8 @@ class Reporter {
       console.log(emptyLine)
     }
 
-    console.log(`${rightPad(you.name, 8, '.').cyan} $${you.balance.toString().green}`)
+    const isYouButton = you.id === game.state.dealer ? '(BTN)' : '     ';
+    console.log(`${isYouButton}${rightPad(you.name, 8, '.').cyan} $${you.balance.toString().green}`)
     console.log('----------------------------'.yellow)
     console.log(` You have put $${game.getTotalForPlayer(you.id)} into this pot.`)
     console.log('----------------------------'.yellow)
