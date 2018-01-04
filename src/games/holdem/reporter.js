@@ -66,6 +66,19 @@ class Reporter {
     console.log(`${isYouButton}${rightPad(you.name, 8, '.').cyan} $${you.balance.toString().green}`)
     console.log('----------------------------'.yellow)
     console.log(` You have put $${game.getTotalForPlayer(you.id)} into this pot.`)
+    if (game.state.activePlayer === you.id && game.state.lastAction) {
+      switch (game.state.lastAction) {
+        case 'check':
+          console.log(` ${them.name} checks `)
+          break
+        case 'raise':
+          console.log(` ${them.name} raises $${game.state.pot.hot[them.id]} `)
+          break
+        case 'call':
+          console.log(` ${them.name} calls $${game.state.pot.hot[you.id]} `)
+          break
+      }
+    }
     console.log('----------------------------'.yellow)
 
     // results

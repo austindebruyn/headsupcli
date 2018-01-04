@@ -9,6 +9,7 @@ class Game {
       hand: -1,
       dealer: 1,
       activePlayer: null,
+      lastAction: null,
       board: {},
       pot: {
         cold: {},

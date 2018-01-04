@@ -56,10 +56,14 @@ function opposite(id) {
 function newHand(game) {
   game.state.hand += 1
 
+  // swap dealers
+  game.state.dealer = opposite(game.state.dealer)
+
   game.state.results = null
   game.state.board = { flop: null, river: null, turn: null }
+  game.state.lastAction = null
 
-  game.state.dealer = opposite(game.state.dealer)
+  // dealer goes first preflop
   game.state.activePlayer = game.state.dealer
 
   game.clearPot()
@@ -76,6 +80,7 @@ function newHand(game) {
 }
 
 function nextStage(game) {
+  game.state.lastAction = null
   game.state.pot.cold[game.state.dealer] += game.state.pot.hot[game.state.dealer]
   game.state.pot.hot[game.state.dealer] = 0
   game.state.pot.cold[opposite(game.state.dealer)] += game.state.pot.hot[opposite(game.state.dealer)]
@@ -83,7 +88,6 @@ function nextStage(game) {
 
   if (!game.state.board.flop) {
     game.state.board.flop = [randomCard(), randomCard(), randomCard()]
-    game.state.activePlayer = game.state.dealer
   } else if (!game.state.board.turn) {
     game.state.board.turn = randomCard()
   } else if (!game.state.board.river) {
@@ -91,6 +95,10 @@ function nextStage(game) {
   } else {
     game.state.results = rank(game)
   }
+
+  game.state.activePlayer = game.state.board.flop
+    ? opposite(game.state.dealer)
+    : game.state.dealer
 }
 
 /**
@@ -125,7 +133,13 @@ function mutate(game, playerId, action, argument) {
     if (game.state.pot[0] === game.state.pot[1] && game.state.activePlayer === game.state.dealer) {
       return nextStage(game)
     }
-    game.state.activePlayer = opposite(game.state.activePlayer)
+
+    if (game.state.board.flop) {
+      game.state.activePlayer = opposite(game.state.activePlayer)
+    } else {
+      return nextStage(game)
+    }
+    game.state.lastAction = action
   }
   if (action === 'ack') {
     if (!game.state.results) {
@@ -155,7 +169,13 @@ function mutate(game, playerId, action, argument) {
     }
     game.state.pot.hot[player.id] += difference
     player.balance -= difference
-    game.state.activePlayer = opposite(game.state.activePlayer)
+
+    if (game.state.board.flop) {
+      return nextStage(game)
+    } else {
+      game.state.activePlayer = opposite(game.state.activePlayer)
+    }
+    game.state.lastAction = action
   }
   if (action === 'raise') {
     const raiseAmount = parseInt(argument, 10)
@@ -178,6 +198,7 @@ function mutate(game, playerId, action, argument) {
     game.state.pot.hot[player.id] += difference
     player.balance -= difference
     game.state.activePlayer = opposite(game.state.activePlayer)
+    game.state.lastAction = action
   }
   if (action === 'allin') {
     if (player.balance === 0) {
