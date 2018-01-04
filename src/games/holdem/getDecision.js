@@ -21,14 +21,52 @@ function getDecision(game, playerId) {
     return null;
   }
   else if (game.state.activePlayer === playerId) {
+    let options = [];
+
+    // preflop
+    if (!game.state.board.flop) {
+      switch (game.state.lastAction) {
+        case null:
+        case 'raise':
+          options = [
+            { name: 'Call', value: 'call' },
+            { name: 'Raise', value: 'raise' },
+            { name: 'Fold', value: 'fold' },
+          ]
+          break
+        case 'call':
+          options = [
+            { name: 'Check', value: 'check' },
+            { name: 'Raise', value: 'raise' },
+            { name: 'Fold', value: 'fold' },
+          ]
+          break
+      }
+    }
+    // postflop
+    else {
+      switch (game.state.lastAction) {
+        case null:
+        case 'check':
+          options = [
+            { name: 'Check', value: 'check' },
+            { name: 'Raise', value: 'raise' },
+            { name: 'Fold', value: 'fold' },
+          ]
+          break
+        case 'raise':
+          options = [
+            { name: 'Call', value: 'call' },
+            { name: 'Raise', value: 'raise' },
+            { name: 'Fold', value: 'fold' },
+          ]
+          break
+      }
+    }
+
     return {
       message: 'What to do?',
-      options: [
-        { name: 'Check', value: 'check' },
-        { name: 'Call', value: 'call' },
-        { name: 'Raise', value: 'raise' },
-        { name: 'Fold', value: 'fold' },
-      ],
+      options,
     }
   }
   // if (game.state.activePlayer === playerId) {
