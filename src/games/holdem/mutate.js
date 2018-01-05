@@ -1,15 +1,9 @@
 const _ = require('lodash')
+const Deck = require('./deck')
 const GameMutationError = require('../../GameMutationError')
 const handranker = require('handranker')
 
 module.exports = mutate
-
-function randomCard() {
-  const rank = _.sample(['A', '2', '3', '4', '5', '6', '7', '8', '9', 'J', 'Q', 'K'])
-  const suit = _.sample(['h', 'd', 'c', 's'])
-
-  return `${rank}${suit}`
-}
 
 function rank(game) {
   if (!game.state.board.flop || !game.state.board.turn || !game.state.board.river) {
@@ -54,6 +48,7 @@ function opposite(id) {
 }
 
 function newHand(game) {
+  game.state.deck = new Deck()
   game.state.hand += 1
 
   // swap dealers
@@ -75,8 +70,8 @@ function newHand(game) {
   game.state.players[game.state.dealer].balance -= game.state.sb
   game.state.players[opposite(game.state.dealer)].balance -= game.state.bb
 
-  game.state.players[game.state.dealer].hand = [randomCard(), randomCard()]
-  game.state.players[opposite(game.state.dealer)].hand = [randomCard(), randomCard()]
+  game.state.players[game.state.dealer].hand = game.state.deck.deal(2)
+  game.state.players[opposite(game.state.dealer)].hand = game.state.deck.deal(2)
 }
 
 function nextStage(game) {
@@ -87,11 +82,11 @@ function nextStage(game) {
   game.state.pot.hot[opposite(game.state.dealer)] = 0
 
   if (!game.state.board.flop) {
-    game.state.board.flop = [randomCard(), randomCard(), randomCard()]
+    game.state.board.flop = game.state.deck.deal(3)
   } else if (!game.state.board.turn) {
-    game.state.board.turn = randomCard()
+    game.state.board.turn = game.state.deck.deal()
   } else if (!game.state.board.river) {
-    game.state.board.river = randomCard()
+    game.state.board.river = game.state.deck.deal()
   } else {
     game.state.results = rank(game)
   }

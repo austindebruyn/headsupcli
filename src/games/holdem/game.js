@@ -1,4 +1,5 @@
 const _ = require('lodash')
+const Deck = require('./deck')
 const getDecision = require('./getDecision')
 const mutate = require('./mutate')
 const deepcopy = require('deepcopy')
@@ -6,6 +7,7 @@ const deepcopy = require('deepcopy')
 class Game {
   constructor() {
     this.state = {
+      deck: new Deck(),
       hand: -1,
       dealer: 1,
       activePlayer: null,
